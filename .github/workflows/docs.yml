@@ -1,0 +1,76 @@
+name: Dokumentation CI/CD
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+    - "docs/**"
+    - "mkdocs.yml"
+    - ".github/workflows/docs.yml"
+  pull_request:
+    paths:
+    - "docs/**"
+    - "mkdocs.yml"
+jobs:
+  test-docs:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Repository auschecken
+      uses: actions/checkout@v3
+
+    - name: Python einrichten
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
+    - name: Abhängigkeiten installieren
+      run: |
+        pip install mkdocs mkdocs-material
+    - name: Dokumentation bauen (Test)
+      run: mkdocs build --strict
+    # Link-Prüfung (robust, funktioniert ohne extra Setup)
+    - name: Links prüfen (Lychee)
+      uses: lycheeverse/lychee-action@v1
+      with:
+        args: >-
+          --verbose --no-progress --accept 200,206,429 "docs/**/*.md"
+      continue-on-error: true # zunächst nicht abbrechen
+      # Optional: Rechtschreibung mit pyspelling (einfaches Beispiel)
+    - name: Rechtschreibung prüfen (optional)
+      run: |
+        pip install pyspelling
+        cat > .pyspelling.yml << 'EOF'
+        matrix:
+          - name: docs-de
+            sources:
+              - docs/**/*.md
+            default_encoding: utf-8
+            dictionary:
+              wordlists:
+                - .wordlist.txt
+            pipeline:
+              - pyspelling.filters.markdown
+        EOF
+        touch .wordlist.txt
+        pyspelling
+      continue-on-error: true
+  deploy-docs:
+    needs: test-docs
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    runs-on: ubuntu-latest
+    steps:
+    - name: Repository auschecken
+      uses: actions/checkout@v3
+    - name: Python einrichten
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
+    - name: Abhängigkeiten installieren
+      run: |
+        pip install mkdocs mkdocs-material
+    - name: Dokumentation bauen
+      run: mkdocs build
+    - name: Auf GitHub Pages deployen
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./site
+        publish_branch: gh-pages
