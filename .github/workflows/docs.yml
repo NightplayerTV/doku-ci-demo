@@ -15,10 +15,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Repository auschecken
-      uses: actions/checkout@latest
+      uses: actions/checkout@v6.0.2
 
     - name: Python einrichten
-      uses: actions/setup-python@latest
+      uses: actions/setup-python@v6.2.0
       with:
         python-version: "3.11"
     - name: Abhängigkeiten installieren
@@ -58,9 +58,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Repository auschecken
-      uses: actions/checkout@latest
+      uses: actions/checkout@v6.0.2
     - name: Python einrichten
-      uses: actions/setup-python@latest
+      uses: actions/setup-python@v6.2.0
       with:
         python-version: "3.11"
     - name: Abhängigkeiten installieren
